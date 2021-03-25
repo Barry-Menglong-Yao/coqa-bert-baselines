@@ -1,5 +1,6 @@
 import time
-
+import datetime
+from dateutil.relativedelta import relativedelta
 
 class Timer(object):
     """Computes elapsed time."""
@@ -9,6 +10,7 @@ class Timer(object):
         self.total = 0
         self.start = round(time.time(), 2)
         self.intervalTime = round(time.time(), 2)
+        self.start_time = datetime.datetime.now()
         print("<> <> <> Starting Timer [{}] <> <> <>".format(self.name))
 
     def reset(self):
@@ -51,3 +53,13 @@ class Timer(object):
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         return "%dh %02dm %02ds" % (h, m, s)
+
+    def remains(self, total_task_num,done_task_num):
+        now  = datetime.datetime.now()
+        #print(now-start)  # elapsed time
+        left = (total_task_num - done_task_num) * (now - self.start_time) / done_task_num
+        sec = int(left.total_seconds())
+        
+        rt = relativedelta(seconds=sec)
+     
+        return "{:02d} hours {:02d} minutes {:02d} seconds".format(int(rt.hours), int(rt.minutes), int(rt.seconds))

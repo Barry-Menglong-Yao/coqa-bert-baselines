@@ -5,6 +5,7 @@ from utils.eval_utils import AverageMeter
 from model import Model
 from transformers import *
 import time
+from utils.timer import Timer
 import os
 
 MODELS = {'BERT':(BertModel,       BertTokenizer,       'bert-base-uncased'),
@@ -45,6 +46,7 @@ class ModelHandler():
 			self.restore()
 
 	def train(self):
+		timer = Timer(' timer' )
 		if not self.restored:
 			print("\n>>> Dev Epoch: [{} / {}]".format(self._epoch, self.config['max_epochs']))
 			self._run_epoch(self.dev_loader, training=False, verbose=self.config['verbose'], save = False)
@@ -69,7 +71,9 @@ class ModelHandler():
 			self._run_epoch(self.dev_loader, training=False, verbose=self.config['verbose'], save = False)
 			format_str = "Validation Epoch {} -- F1: {:0.2f}, EM: {:0.2f} --"
 			print(format_str.format(self._epoch, self._dev_f1.mean(), self._dev_em.mean()))
-			
+			print("has finish :{} epoch, remaining time:{}".format(self._epoch ,
+			timer.remains(self.config['max_epochs'],self._epoch )))
+
 			if self._best_f1 <= self._dev_f1.mean():
 			    self._best_epoch = self._epoch
 			    self._best_f1 = self._dev_f1.mean()
