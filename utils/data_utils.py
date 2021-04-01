@@ -116,6 +116,9 @@ class CoQADataset(Dataset):
         print('Paragraph length: avg = %.1f, max = %d' % (np.average(paragraph_lens), np.max(paragraph_lens)))
         print('Question length: avg = %.1f, max = %d' % (np.average(question_lens), np.max(question_lens)))
         #timer.finish()
+
+
+
         #print(self.paragraphs)
         print("############################################")
         print(self.examples)
@@ -123,9 +126,11 @@ class CoQADataset(Dataset):
         def save_object(obj, filename):
             with open(filename, 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
+
         #sname = 'temp_data/example.pkl'
         #save_object(self.examples, sname)
         #sname = 'temp_data/paragraph.pkl'
+
         #save_object(self.paragraphs, sname)
     #'''
 
