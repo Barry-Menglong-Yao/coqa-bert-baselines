@@ -74,8 +74,8 @@ class CoQADataset(Dataset):
         self.examples = []
         self.vocab = Counter()
         self.chunked_examples = []        
-        dataset = read_json(filename)
-        print("Read started.   ", len(dataset['data']))
+        # dataset = read_json(filename)
+        # print("Read started.   ", len(dataset['data']))
 
         #'''
         with open('temp_data/example.pkl', 'rb') as input:
@@ -84,7 +84,7 @@ class CoQADataset(Dataset):
         with open('temp_data/paragraph.pkl', 'rb') as input:
           self.paragraphs = pickle.load(input) 
 
-        print("Len ====.   ", len(self.paragraphs))         
+        print('Load {} paragraphs, {} examples.'.format(len(self.paragraphs), len(self.examples)))  
         '''
         number_before_break = 0
         for paragraph in tqdm(dataset['data']):
@@ -142,56 +142,86 @@ class CoQADataset(Dataset):
         #save_object(self.paragraphs, sname)
     #'''
 
- 
+    def loadall(filename):
+                with open(filename, "rb") as f:
+                    while True:
+                        try:
+                            yield pickle.load(f)
+                        except EOFError:
+                            break
+
+    def save_object(obj, fil):
+            pickle.dump(obj, filename) 
+
+    def load_cnt(self):
+        file_path = 'temp_data/count.txt'
+        num = 0
+        if os.path.isfile(file_path)  :
+            with open(file_path, newline='') as f:
+                rows = list(csv.reader(f))
+            for row in rows:
+                #print(type(row), row)
+                num = int(row[0])
+            print("Mx count =======     ", num)
+
+        cnt = num
+        return cnt
+
+    def save_cnt(self,cnt):
+        file_path = 'temp_data/count.txt'
+        f = open(file_path, "w")
+            #if(cnt>=num):
+            f.write(str(cnt))
+            f.close()
+
+    def load_tokenizer(self,tokenizer):
+        cnt=0
+        for token in loadall('temp_data/tokenizer.pkl'):
+            print("Token ---   ",type(token), token)
+            for tok in token:
+                tokenizer.add_tokens(token)
+                cnt += 1 
+        print("Chunk paragrapsh begin.      tokenizer len ", len(tokenizer), cnt) 
+        return tokenizer
+
+    from enum import Enum
+    class PREPROCESS_STEP(Enum):
+        SPLIT_DATA_AND_SAVE = 1  #is spliting data into multi parts and save them. will save from the last checkpoint
+        LOAD_ALL_DATA = 2   #is in training step. Just load all dataset and cnt=0
+     
+
+
+    def chunk_paragraphs(self, tokenizer, model_name):
+        preprocess_step=PREPROCESS_STEP.SPLIT_DATA_AND_SAVE  
+
+        if isinstance(preprocess_step, PREPROCESS_STEP.LOAD_ALL_DATA):
+            tokenizer=self.load_tokenizer(tokenizer)
+        else:
+            self.chunk_paragraphs_and_save(  tokenizer, model_name)
+        print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
+
+         
+
     ##
     # generate input_tokens for BERT and save in self.chunked_examples  (can use minibatch)
     #  tokenizer.add_tokens()
-    def chunk_paragraphs(self, tokenizer, model_name):
-        
+    def chunk_paragraphs_and_save(self, tokenizer, model_name):
+         
+        cnt = self.load_cnt()
+        # tokenizer=self.load_tokenizer( tokenizer)
+ 
         sname = 'temp_data/tokenizer_50.pkl'
-        def loadall(filename):
-            with open(filename, "rb") as f:
-                while True:
-                    try:
-                        yield pickle.load(f)
-                    except EOFError:
-                        break
-
-        cnt = 0
-        #for token in loadall('temp_data/tokenizer.pkl'):
-            #print("Token ---   ",type(token), token)
-            #for tok in token:
-            #tokenizer.add_tokens(token)
-            #cnt += 1 
-        #''' 
-        print("Chunk paragrapsh begin.      tokenizer len ", len(tokenizer), cnt)  
         filename = open(sname,'ab')
-
-        def save_object(obj, fil):
-            pickle.dump(obj, filename)  
 
         c_unknown = 0
         c_known = 0
         dis = 0
   
-        file_path = 'temp_data/count.txt'
-        num = 0
-        if os.path.isfile(file_path):
-          with open(file_path, newline='') as f:
-            rows = list(csv.reader(f))     
-          for row in rows:
-            #print(type(row), row)    
-            num = int(row[0])
-          print("Mx count =======     ", num)
-±
-        cnt = num 
+        num=cnt
         for i, ex in tqdm(enumerate(self.examples[num-1::])):
             #print(cnt, ex)
             cnt += 1  
-            f = open(file_path, "w")
-            #if(cnt>=num):
-            f.write(str(cnt))
-            f.close()
+            self.save_cnt(cnt)
 
             #if cnt <num:
             #  cnt += 1
