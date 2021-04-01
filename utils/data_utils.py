@@ -54,6 +54,23 @@ def preprocess(text):
         tokens.append(t.text)
     return tokens
 
+
+from enum import Enum
+class PREPROCESS_STEP(Enum):
+    SPLIT_DATA_AND_SAVE = 1  #is spliting data into multi parts and save them. will save from the last checkpoint
+    LOAD_ALL_DATA = 2   #is in training step. Just load all dataset and cnt=0
+
+
+def loadall( filename):
+    with open(filename, "rb") as f:
+        while True:
+            try:
+                yield pickle.load(f)
+            except EOFError:
+                break
+
+def save_object(obj, fil):
+        pickle.dump(obj, filename) 
 class CoQADataset(Dataset):
     """CoQA dataset."""
 
@@ -142,16 +159,7 @@ class CoQADataset(Dataset):
         #save_object(self.paragraphs, sname)
     #'''
 
-    def loadall(filename):
-                with open(filename, "rb") as f:
-                    while True:
-                        try:
-                            yield pickle.load(f)
-                        except EOFError:
-                            break
-
-    def save_object(obj, fil):
-            pickle.dump(obj, filename) 
+    
 
     def load_cnt(self):
         file_path = 'temp_data/count.txt'
@@ -171,30 +179,27 @@ class CoQADataset(Dataset):
         file_path = 'temp_data/count.txt'
         f = open(file_path, "w")
             #if(cnt>=num):
-            f.write(str(cnt))
-            f.close()
+        f.write(str(cnt))
+        f.close()
 
     def load_tokenizer(self,tokenizer):
         cnt=0
         for token in loadall('temp_data/tokenizer.pkl'):
-            print("Token ---   ",type(token), token)
+            # print("Token ---   ",type(token), token)
             for tok in token:
                 tokenizer.add_tokens(token)
                 cnt += 1 
         print("Chunk paragrapsh begin.      tokenizer len ", len(tokenizer), cnt) 
         return tokenizer
 
-    from enum import Enum
-    class PREPROCESS_STEP(Enum):
-        SPLIT_DATA_AND_SAVE = 1  #is spliting data into multi parts and save them. will save from the last checkpoint
-        LOAD_ALL_DATA = 2   #is in training step. Just load all dataset and cnt=0
+    
      
 
 
     def chunk_paragraphs(self, tokenizer, model_name):
-        preprocess_step=PREPROCESS_STEP.SPLIT_DATA_AND_SAVE  
+        preprocess_step=PREPROCESS_STEP.LOAD_ALL_DATA  
 
-        if isinstance(preprocess_step, PREPROCESS_STEP.LOAD_ALL_DATA):
+        if preprocess_step==PREPROCESS_STEP.LOAD_ALL_DATA:
             tokenizer=self.load_tokenizer(tokenizer)
         else:
             self.chunk_paragraphs_and_save(  tokenizer, model_name)
