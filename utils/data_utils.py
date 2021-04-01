@@ -218,7 +218,7 @@ class CoQADataset(Dataset):
     def chunk_paragraphs_and_save(self, tokenizer, model_name):
          
         cnt = self.load_cnt()
-         #when save the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
+        #TODO when save the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
         tokenizer=self.load_tokenizer( tokenizer)
  
         sname = 'temp_data/tokenizer_50.pkl'
