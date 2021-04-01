@@ -195,7 +195,7 @@ class CoQADataset(Dataset):
                 cnt += 1 
                 if cnt %1000 ==0:
                     print(timer1.remains(50000, cnt))
-        print("Chunk paragrapsh begin.      tokenizer len ", len(tokenizer), cnt) 
+        print("load tokenizer len {} number {} ".format( len(tokenizer), cnt) )
         return tokenizer
 
     
@@ -209,7 +209,7 @@ class CoQADataset(Dataset):
             tokenizer=self.load_tokenizer(tokenizer)
         else:
             self.chunk_paragraphs_and_save(  tokenizer, model_name)
-        print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
+        
 
          
 
@@ -219,7 +219,7 @@ class CoQADataset(Dataset):
     def chunk_paragraphs_and_save(self, tokenizer, model_name):
         torch.save(tokenizer, 'original_tokenizer.pt')
         cnt = self.load_cnt()
- 
+        print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
         #TODO when save the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
         #tokenizer=self.load_tokenizer( tokenizer)
  
@@ -277,7 +277,7 @@ class CoQADataset(Dataset):
                     else:
                         tokens.append(q.lower())
                         tokenizer.add_tokens([q.lower()])
-                        save_object([q.lower()], sname)
+                        save_object([q.lower()], filename)
 
                 if model_name == 'RoBERTa':
                     tokens.extend(['</s>', '</s>'])
@@ -286,7 +286,7 @@ class CoQADataset(Dataset):
                     segment_ids.append(0)
                 
                 tokenizer.add_tokens(paragraph[spans[0]:spans[0] + spans[1]])
-                save_object(paragraph[spans[0]:spans[0] + spans[1]], sname)
+                save_object(paragraph[spans[0]:spans[0] + spans[1]], filename)
 
                 #print("Save ===.   ", paragraph[spans[0]:spans[0] + spans[1]])
 
@@ -303,7 +303,7 @@ class CoQADataset(Dataset):
                     tokens.append('<unknown>')
                     tokenizer.add_tokens(['<unknown>'])
 
-                    save_object(['<unknown>'], sname)
+                    save_object(['<unknown>'], filename)
 
                     segment_ids.append(1)
                 if model_name == 'RoBERTa':
@@ -338,7 +338,7 @@ class CoQADataset(Dataset):
                 self.chunked_examples.append(_example)
                 #save_object(_example, sname)
 
-        print("Chunk paragraphs end     ",len(tokenizer))
+        print("Chunk paragrapsh end.      tokenizer number: {} ".format(len(tokenizer))  ) 
         filename.close()
         torch.save(tokenizer, 'tokenizer_50000.pt')
         torch.save(self, 'coqaDataset.pt')
