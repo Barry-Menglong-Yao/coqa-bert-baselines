@@ -232,12 +232,16 @@ class CoQADataset(Dataset):
         dis = 0
   
         num=cnt
-        for i, ex in tqdm(enumerate(self.examples[num-1::])):
+        
+        start_idx=num-1
+        if start_idx<0:
+            start_idx=0
+        for i, ex in tqdm(enumerate(self.examples[start_idx::])):
             #print(cnt, ex)
             cnt += 1  
             # self.save_cnt(cnt)
-
-            if cnt >10000:
+             
+            if i >10000:
               break
               
             question_length = len(ex['annotated_question']['word'])
