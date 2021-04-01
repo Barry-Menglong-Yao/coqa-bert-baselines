@@ -1,3 +1,7 @@
+You can use http://jsonviewer.stack.hu/ to see the example of input file(coqa.dev_readable_example.json)
+
+The original file can be found: https://drive.google.com/file/d/1ik0d_nIsGdXLn8o7tYiiDWN6PK2XNy-D/view
+
 # coqa-bert-baselines
 BERT baselines for extractive question answering on coqa (https://stanfordnlp.github.io/coqa/). The original paper for the coqa dataset can be found [here](https://arxiv.org/abs/1808.07042). We provide the following models - 
 

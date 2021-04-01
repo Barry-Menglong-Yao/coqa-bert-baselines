@@ -1,6 +1,7 @@
 import argparse
 from model_handler import ModelHandler
 from utils.download import download_model
+import os
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -11,12 +12,12 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--trainset', type = str, default = '/home/aniket/coqa/data/coqa.train.json', help = 'training dataset file')
-parser.add_argument('--devset', type = str, default = '/home/aniket/coqa/data/coqa.dev.json', help = 'development dataset file')
+parser.add_argument('--trainset', type = str, default = 'data/coqa.train.json', help = 'training dataset file')
+parser.add_argument('--devset', type = str, default = 'data/coqa.dev.json', help = 'development dataset file')
 parser.add_argument('--model_name', type = str, default = 'BERT', help = '[BERT|RoBERTa|DistilBERT|SpanBERT]')
 parser.add_argument('--model_path', type = str, default = None, help = 'path to pretrained model')
 parser.add_argument('--pretrained_dir', type = str, default = 'model')
-parser.add_argument('--save_state_dir', type = str, default = None)
+parser.add_argument('--save_state_dir', type = str, default = 'output')
 
 parser.add_argument('--cuda', type = str2bool, default = True, help = 'use gpu or not')
 parser.add_argument('--debug', type = str2bool, default = True)
@@ -43,6 +44,8 @@ if args['model_name'] == 'SpanBERT':
 
 
 # TODO: cuda check
+
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 handler = ModelHandler(args)
 handler.train()

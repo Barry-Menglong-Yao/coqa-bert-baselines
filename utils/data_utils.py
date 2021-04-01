@@ -9,10 +9,16 @@ import math
 import textacy.preprocessing.replace as rep
 from tqdm import tqdm
 import spacy
+import csv
+import pickle
+import os.path
 nlp = spacy.load('en_core_web_sm')
 
 def prepare_datasets(config, tokenizer_model):
+    print("Prepare dataset begin")
     tokenizer = tokenizer_model[1].from_pretrained(tokenizer_model[2])
+
+
     trainset = CoQADataset(config['trainset'])
     trainset.chunk_paragraphs(tokenizer, config['model_name'])
     trainloader = CustomDataLoader(trainset, config['batch_size'])
@@ -59,8 +65,24 @@ class CoQADataset(Dataset):
         self.paragraphs = []
         self.examples = []
         self.vocab = Counter()
+        self.chunked_examples = []        
         dataset = read_json(filename)
+        print("Read started.   ", len(dataset['data']))
+
+        #'''
+        with open('temp_data/example.pkl', 'rb') as input:
+          self.examples = pickle.load(input)
+
+        with open('temp_data/paragraph.pkl', 'rb') as input:
+          self.paragraphs = pickle.load(input) 
+
+        print("Len ====.   ", len(self.paragraphs))         
+        '''
+        cnt = 0
         for paragraph in tqdm(dataset['data']):
+            if cnt == 5:
+              break
+            cnt += 1
             #print(paragraph)
             history = []
             for qas in paragraph['qas']:
@@ -94,14 +116,69 @@ class CoQADataset(Dataset):
         print('Paragraph length: avg = %.1f, max = %d' % (np.average(paragraph_lens), np.max(paragraph_lens)))
         print('Question length: avg = %.1f, max = %d' % (np.average(question_lens), np.max(question_lens)))
         #timer.finish()
+        #print(self.paragraphs)
+        print("############################################")
+        print(self.examples)
         self.chunked_examples = []
-        
+        def save_object(obj, filename):
+            with open(filename, 'wb') as output:  # Overwrites any existing file.
+                pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
+        #sname = 'temp_data/example.pkl'
+        #save_object(self.examples, sname)
+        #sname = 'temp_data/paragraph.pkl'
+        #save_object(self.paragraphs, sname)
+    #'''
 
     def chunk_paragraphs(self, tokenizer, model_name):
+        
+        sname = 'temp_data/tokenizer_50.pkl'
+        def loadall(filename):
+            with open(filename, "rb") as f:
+                while True:
+                    try:
+                        yield pickle.load(f)
+                    except EOFError:
+                        break
+
+        cnt = 0
+        #for token in loadall('temp_data/tokenizer.pkl'):
+            #print("Token ---   ",type(token), token)
+            #for tok in token:
+            #tokenizer.add_tokens(token)
+            #cnt += 1 
+        #''' 
+        print("Chunk paragrapsh begin.      tokenizer len ", len(tokenizer), cnt)  
+        filename = open(sname,'ab')
+
+        def save_object(obj, fil):
+            pickle.dump(obj, filename)  
+
         c_unknown = 0
         c_known = 0
         dis = 0
-        for i, ex in tqdm(enumerate(self.examples)):
+  
+        file_path = 'temp_data/count.txt'
+        num = 0
+        if os.path.isfile(file_path):
+          with open(file_path, newline='') as f:
+            rows = list(csv.reader(f))     
+          for row in rows:
+            #print(type(row), row)    
+            num = int(row[0])
+          print("Mx count =======     ", num)
+±
+        cnt = num 
+        for i, ex in tqdm(enumerate(self.examples[num-1::])):
+            #print(cnt, ex)
+            cnt += 1  
+            f = open(file_path, "w")
+            #if(cnt>=num):
+            f.write(str(cnt))
+            f.close()
+
+            #if cnt <num:
+            #  cnt += 1
+            #  continue
             question_length = len(ex['annotated_question']['word'])
             if question_length > 350: # TODO provide from config
                 continue
@@ -139,6 +216,7 @@ class CoQADataset(Dataset):
                     else:
                         tokens.append(q.lower())
                         tokenizer.add_tokens([q.lower()])
+                        save_object([q.lower()], sname)
 
                 if model_name == 'RoBERTa':
                     tokens.extend(['</s>', '</s>'])
@@ -147,6 +225,10 @@ class CoQADataset(Dataset):
                     segment_ids.append(0)
                 
                 tokenizer.add_tokens(paragraph[spans[0]:spans[0] + spans[1]])
+                save_object(paragraph[spans[0]:spans[0] + spans[1]], sname)
+
+                #print("Save ===.   ", paragraph[spans[0]:spans[0] + spans[1]])
+
                 tokens.extend(paragraph[spans[0]:spans[0] + spans[1]])
                 segment_ids.extend([1] * spans[1])
                 yes_index = len(tokens)
@@ -159,6 +241,9 @@ class CoQADataset(Dataset):
                 if spans[2] == 1:
                     tokens.append('<unknown>')
                     tokenizer.add_tokens(['<unknown>'])
+
+                    save_object(['<unknown>'], sname)
+
                     segment_ids.append(1)
                 if model_name == 'RoBERTa':
                     tokens.append('</s>')
@@ -190,6 +275,12 @@ class CoQADataset(Dataset):
                 
                 _example  = {'tokens': tokens, 'answer':tokens[start : end + 1],'actual_answer':ex['answer'] ,'input_tokens':input_ids, 'input_mask':input_mask, 'segment_ids':segment_ids, 'start':start, 'end':end}
                 self.chunked_examples.append(_example)
+                #save_object(_example, sname)
+
+        print("Chunk paragraphs end     ",len(tokenizer))
+        filename.close()
+        #f.close()
+        #'''      
     def __len__(self):
         return len(self.chunked_examples)
 
@@ -232,6 +323,3 @@ if __name__=='__main__':
     from transformers import *
     #tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     dataset = CoQADataset('coqa.train.json')
-
-    
-

@@ -1,0 +1,15 @@
+data/coqa.train.json
+data/coqa.dev.json
+.vscode/settings.json
+__pycache__/model_handler.cpython-37.pyc
+__pycache__/model_handler.cpython-38.pyc
+__pycache__/model_handler.cpython-39.pyc
+__pycache__/model.cpython-37.pyc
+__pycache__/model.cpython-38.pyc
+utils/__pycache__/data_utils.cpython-37.pyc
+utils/__pycache__/data_utils.cpython-38.pyc
+utils/__pycache__/data_utils.cpython-39.pyc
+utils/__pycache__/download.cpython-38.pyc
+utils/__pycache__/eval_utils.cpython-37.pyc
+utils/__pycache__/eval_utils.cpython-38.pyc
+utils/__pycache__/timer.cpython-38.pyc
