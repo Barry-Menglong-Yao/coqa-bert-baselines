@@ -2,6 +2,7 @@ import json
 import io
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
+import torch 
 from collections import Counter, defaultdict
 import numpy as np
 from random import shuffle
@@ -70,7 +71,7 @@ def loadall( filename):
             except EOFError:
                 break
 
-def save_object(obj, fil):
+def save_object(obj, filename):
         pickle.dump(obj, filename) 
 class CoQADataset(Dataset):
     """CoQA dataset."""
@@ -216,10 +217,12 @@ class CoQADataset(Dataset):
     # generate input_tokens for BERT and save in self.chunked_examples  (can use minibatch)
     #  tokenizer.add_tokens()
     def chunk_paragraphs_and_save(self, tokenizer, model_name):
-         
+        torch.save(tokenizer, 'original_tokenizer.pt')
         cnt = self.load_cnt()
+ 
         #TODO when save the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
-        tokenizer=self.load_tokenizer( tokenizer)
+        #tokenizer=self.load_tokenizer( tokenizer)
+ 
  
         sname = 'temp_data/tokenizer_50.pkl'
         filename = open(sname,'ab')
@@ -232,11 +235,11 @@ class CoQADataset(Dataset):
         for i, ex in tqdm(enumerate(self.examples[num-1::])):
             #print(cnt, ex)
             cnt += 1  
-            self.save_cnt(cnt)
+            # self.save_cnt(cnt)
 
-            #if cnt <num:
-            #  cnt += 1
-            #  continue
+            if cnt >10000:
+              break
+              
             question_length = len(ex['annotated_question']['word'])
             if question_length > 350: # TODO provide from config
                 continue
@@ -337,6 +340,8 @@ class CoQADataset(Dataset):
 
         print("Chunk paragraphs end     ",len(tokenizer))
         filename.close()
+        torch.save(tokenizer, 'tokenizer_50000.pt')
+        torch.save(self, 'coqaDataset.pt')
         #f.close()
         #'''      
     def __len__(self):
