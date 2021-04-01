@@ -236,11 +236,14 @@ class CoQADataset(Dataset):
         start_idx=num-1
         if start_idx<0:
             start_idx=0
+        timer1=timer.Timer()
         for i, ex in tqdm(enumerate(self.examples[start_idx::])):
             #print(cnt, ex)
             cnt += 1  
             # self.save_cnt(cnt)
-             
+            
+            if cnt%10==0:
+                print(timer1.remains(10000,i))
             if i >10000:
               break
               
