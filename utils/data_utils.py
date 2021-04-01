@@ -57,6 +57,14 @@ def preprocess(text):
 class CoQADataset(Dataset):
     """CoQA dataset."""
 
+
+    """
+    1,self.paragraphs.append(paragraph)
+    2,
+    qas['annotated_question']['word'] is conversation history: Q1 A1 Q2 A2 ... current_Q
+    self.examples.append(qas)
+    3,self.vocab[w] += 1
+    """
     def __init__(self, filename):
         #timer = Timer('Load %s' % filename)
         self.filename = filename
@@ -78,11 +86,11 @@ class CoQADataset(Dataset):
 
         print("Len ====.   ", len(self.paragraphs))         
         '''
-        cnt = 0
+        number_before_break = 0
         for paragraph in tqdm(dataset['data']):
-            if cnt == 5:
+            if number_before_break == 5:
               break
-            cnt += 1
+            number_before_break += 1
             #print(paragraph)
             history = []
             for qas in paragraph['qas']:
@@ -134,6 +142,10 @@ class CoQADataset(Dataset):
         #save_object(self.paragraphs, sname)
     #'''
 
+ 
+    ##
+    # generate input_tokens for BERT and save in self.chunked_examples  (can use minibatch)
+    #  tokenizer.add_tokens()
     def chunk_paragraphs(self, tokenizer, model_name):
         
         sname = 'temp_data/tokenizer_50.pkl'
