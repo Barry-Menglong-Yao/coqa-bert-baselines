@@ -202,7 +202,7 @@ class CoQADataset(Dataset):
 
 
     def chunk_paragraphs(self, tokenizer, model_name):
-        preprocess_step=PREPROCESS_STEP.LOAD_ALL_DATA  
+        preprocess_step=PREPROCESS_STEP.SPLIT_DATA_AND_SAVE  
 
         if preprocess_step==PREPROCESS_STEP.LOAD_ALL_DATA:
             tokenizer=self.load_tokenizer(tokenizer)
