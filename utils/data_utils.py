@@ -12,6 +12,7 @@ import spacy
 import csv
 import pickle
 import os.path
+import utils.timer  as  timer
 nlp = spacy.load('en_core_web_sm')
 
 def prepare_datasets(config, tokenizer_model):
@@ -183,12 +184,16 @@ class CoQADataset(Dataset):
         f.close()
 
     def load_tokenizer(self,tokenizer):
+        timer1=timer.Timer()
         cnt=0
-        for token in loadall('temp_data/tokenizer.pkl'):
+        all_token_list=loadall('temp_data/tokenizer.pkl')
+        for token_list in all_token_list:
             # print("Token ---   ",type(token), token)
-            for tok in token:
+            for token in token_list:
                 tokenizer.add_tokens(token)
                 cnt += 1 
+                if cnt %1000 ==0:
+                    print(timer1.remains(50000, cnt))
         print("Chunk paragrapsh begin.      tokenizer len ", len(tokenizer), cnt) 
         return tokenizer
 
@@ -213,7 +218,8 @@ class CoQADataset(Dataset):
     def chunk_paragraphs_and_save(self, tokenizer, model_name):
          
         cnt = self.load_cnt()
-        # tokenizer=self.load_tokenizer( tokenizer)
+         #when save the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
+        tokenizer=self.load_tokenizer( tokenizer)
  
         sname = 'temp_data/tokenizer_50.pkl'
         filename = open(sname,'ab')

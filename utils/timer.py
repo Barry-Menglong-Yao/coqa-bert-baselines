@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 class Timer(object):
     """Computes elapsed time."""
-    def __init__(self, name):
+    def __init__(self, name='default'):
         self.name = name
         self.running = True
         self.total = 0
@@ -62,4 +62,4 @@ class Timer(object):
         
         rt = relativedelta(seconds=sec)
      
-        return "{:02d} hours {:02d} minutes {:02d} seconds".format(int(rt.hours), int(rt.minutes), int(rt.seconds))
+        return "remaining time: {:02d} hours {:02d} minutes {:02d} seconds".format(int(rt.hours), int(rt.minutes), int(rt.seconds))
