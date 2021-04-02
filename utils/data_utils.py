@@ -49,6 +49,7 @@ def prepare_datasets(config, tokenizer_model):
             trainset = CoQADataset(config['trainset'])
             trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,data_set_range)
             trainloader = CustomDataLoader(trainset, config['batch_size'])
+             
     else:
         trainset = CoQADataset(config['trainset'])
         trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,data_set_range)
@@ -251,7 +252,7 @@ class CoQADataset(Dataset):
     # generate input_tokens for BERT and save in self.chunked_examples  (can use minibatch)
     #  tokenizer.add_tokens()
     def chunk_paragraphs_and_save(self, tokenizer, model_name ,data_set_range):
-        #TODO when preprocess the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
+        # when preprocess the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
         tokenizer= self.load_tokenizer(data_set_range,tokenizer)
         print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
         # cnt = self.load_cnt(data_set_range)
@@ -259,7 +260,8 @@ class CoQADataset(Dataset):
         c_known = 0
         dis = 0
 
-        number_of_part1=54000
+ 
+        number_of_part1=40000
         if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
             start_idx=number_of_part1
         else:
@@ -270,8 +272,8 @@ class CoQADataset(Dataset):
             
             if i >=number_of_part1:
                 break
-            if (i+1)%1000==0:
-                print(timer1.remains(10000,i))
+            if (i+1)%5000==0:
+                print(timer1.remains(number_of_part1,i))
                 
             
               
@@ -372,7 +374,7 @@ class CoQADataset(Dataset):
 
         print("Chunk paragrapsh end.      tokenizer number: {} ".format(len(tokenizer))  ) 
         self.save_tokenizer(tokenizer,data_set_range)
-        self.save_coqa_dataset(data_set_range)
+        self.save_coqa_dataset(data_set_range) #chunked_examples
      
 
     def save_tokenizer(self,tokenizer,data_set_range):
