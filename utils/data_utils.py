@@ -18,12 +18,10 @@ nlp = spacy.load('en_core_web_sm')
 
 TRAIN_COQA_DATASET_VERSION1_FILENAME="temp_data/train/train_coqa_dataset_version1.pt"
 TRAIN_COQA_DATASET_VERSION2_FILENAME="temp_data/train/train_coqa_dataset_version2_10000.pt"
-#TODO "temp_data/dev/dev_coqa_dataset.pt"
-DEV_COQA_DATASET_FILENAME=TRAIN_COQA_DATASET_VERSION2_FILENAME
+DEV_COQA_DATASET_FILENAME="temp_data/dev/dev_coqa_dataset.pt"
 TRAIN_TOKENIZER_VERSION1_FILENAME="temp_data/train/train_tokenizer_version1.pt"
 TRAIN_TOKENIZER_VERSION2_FILENAME="temp_data/train/train_tokenizer_version2_10000.pt"
-#TODO "temp_data/dev/dev_tokenizer_version3.pt"
-DEV_TOKENIZER_VERSION3_FILENAME=TRAIN_TOKENIZER_VERSION2_FILENAME
+DEV_TOKENIZER_VERSION3_FILENAME= "temp_data/dev/dev_tokenizer_version3.pt"
  
 number_of_part1=25000   #25000 for 4 hours. 125000 for all. 3 for test.
 
