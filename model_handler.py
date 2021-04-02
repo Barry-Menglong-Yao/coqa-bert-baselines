@@ -47,7 +47,8 @@ class ModelHandler():
 
 	def train(self):
 		timer = Timer(' timer' )
-		if not self.restored:
+  
+		if not self.restored: 
 			print("\n>>> Dev Epoch: [{} / {}]".format(self._epoch, self.config['max_epochs']))
 			self._run_epoch(self.dev_loader, training=False, verbose=self.config['verbose'], save = False)
 			
