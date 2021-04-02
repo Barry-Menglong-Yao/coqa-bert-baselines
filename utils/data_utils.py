@@ -18,21 +18,24 @@ nlp = spacy.load('en_core_web_sm')
 
 TRAIN_COQA_DATASET_VERSION1_FILENAME="temp_data/train/train_coqa_dataset_version1.pt"
 TRAIN_COQA_DATASET_VERSION2_FILENAME="temp_data/train/train_coqa_dataset_version2_10000.pt"
-DEV_COQA_DATASET_FILENAME="temp_data/dev/dev_coqa_dataset.pt"
+#TODO "temp_data/dev/dev_coqa_dataset.pt"
+DEV_COQA_DATASET_FILENAME=TRAIN_COQA_DATASET_VERSION2_FILENAME
 TRAIN_TOKENIZER_VERSION1_FILENAME="temp_data/train/train_tokenizer_version1.pt"
 TRAIN_TOKENIZER_VERSION2_FILENAME="temp_data/train/train_tokenizer_version2_10000.pt"
-DEV_TOKENIZER_VERSION3_FILENAME="temp_data/dev/dev_tokenizer_version3.pt"
-
+#TODO "temp_data/dev/dev_tokenizer_version3.pt"
+DEV_TOKENIZER_VERSION3_FILENAME=TRAIN_TOKENIZER_VERSION2_FILENAME
+ 
+number_of_part1=25000   #25000 for 4 hours. 125000 for all. 3 for test.
 
 def prepare_datasets(config, tokenizer_model):
     print("Prepare dataset begin")
     tokenizer = tokenizer_model[1].from_pretrained(tokenizer_model[2])
     # if preprocess part 1
-    data_set_range=DATA_SET_RANGE.DEV_DATA 
+    data_set_range=DATA_SET_RANGE.TRAIN_DATA_SECOND_PART 
     # elif preprocess part 2
     # data_set_range=DATA_SET_RANGE.TRAIN_DATA_SECOND_PART
 
-    preprocess_step=PREPROCESS_STEP.SPLIT_DATA_AND_SAVE  
+    preprocess_step=PREPROCESS_STEP.LOAD_ALL_DATA  
     trainloader=None 
     devloader=None 
 
@@ -49,14 +52,16 @@ def prepare_datasets(config, tokenizer_model):
             trainset = CoQADataset(config['trainset'])
             trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,data_set_range)
             trainloader = CustomDataLoader(trainset, config['batch_size'])
-             
+            
     else:
-        trainset = CoQADataset(config['trainset'])
-        trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,data_set_range)
+        trainset = torch.load(TRAIN_COQA_DATASET_VERSION2_FILENAME)
+        # trainset = CoQADataset(config['trainset'])
+        trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,DATA_SET_RANGE.TRAIN_DATA_SECOND_PART)
         trainloader = CustomDataLoader(trainset, config['batch_size'])
-        devset = CoQADataset(config['devset'])
-        devset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,data_set_range)
-        devloader = CustomDataLoader(devset, config['batch_size'])
+        devset = torch.load(DEV_COQA_DATASET_FILENAME)
+        devset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,DATA_SET_RANGE.DEV_DATA)
+        devloader = CustomDataLoader(devset, config['batch_size'])  
+ 
     return trainloader, devloader, tokenizer
 
 def get_file_contents(filename, encoding='utf-8'):
@@ -241,9 +246,9 @@ class CoQADataset(Dataset):
         
 
         if preprocess_step==PREPROCESS_STEP.LOAD_ALL_DATA:
-            tokenizer=self.load_tokenizer(tokenizer)
+            tokenizer=self.load_tokenizer(preprocess_step,data_set_range,tokenizer)
         else:
-            self.chunk_paragraphs_and_save(  tokenizer, model_name,data_set_range)
+            self.chunk_paragraphs_and_save(  tokenizer, model_name,preprocess_step,data_set_range)
         
 
          
@@ -251,9 +256,9 @@ class CoQADataset(Dataset):
     ##
     # generate input_tokens for BERT and save in self.chunked_examples  (can use minibatch)
     #  tokenizer.add_tokens()
-    def chunk_paragraphs_and_save(self, tokenizer, model_name ,data_set_range):
+    def chunk_paragraphs_and_save(self, tokenizer, model_name ,preprocess_step,data_set_range):
         #  when preprocess the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
-        tokenizer= self.load_tokenizer(data_set_range,tokenizer)
+        tokenizer= self.load_tokenizer(preprocess_step,data_set_range,tokenizer)
         print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
         # cnt = self.load_cnt(data_set_range)
         c_unknown = 0
@@ -261,7 +266,7 @@ class CoQADataset(Dataset):
         dis = 0
 
   
-        number_of_part1=125000
+        
         if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
             start_idx=number_of_part1
         else:
@@ -269,18 +274,19 @@ class CoQADataset(Dataset):
          
         timer1=timer.Timer()
         for i, ex in tqdm(enumerate(self.examples[start_idx::])):
-            
-            if i >=number_of_part1:
+            total=min([len(self.examples[start_idx::]),number_of_part1])
+
+            if i >=total:
                 break
             if (i+1)%5000==0:
                 self.save_tokenizer(tokenizer,data_set_range)
                 self.save_coqa_dataset(data_set_range) #chunked_examples
-                print(timer1.remains(number_of_part1,i))
+                print(timer1.remains(total,i))
                 
             
               
             question_length = len(ex['annotated_question']['word'])
-            if question_length > 350: # TODO provide from config
+            if question_length > 350:  
                 continue
             doc_length_available = 512 - question_length - 3
             if model_name == 'RoBERTa':
@@ -395,11 +401,17 @@ class CoQADataset(Dataset):
         else:
             torch.save(self,DEV_COQA_DATASET_FILENAME)
 
-    def load_tokenizer(self,data_set_range,tokenizer):
-        if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
-            tokenizer=torch.load(TRAIN_TOKENIZER_VERSION1_FILENAME)
-        elif data_set_range==DATA_SET_RANGE.DEV_DATA:
-            tokenizer=torch.load(TRAIN_TOKENIZER_VERSION2_FILENAME)
+    def load_tokenizer(self,preprocess_step,data_set_range,tokenizer):
+        if preprocess_step==PREPROCESS_STEP.LOAD_ALL_DATA:
+            if data_set_range==DATA_SET_RANGE.DEV_DATA: 
+                tokenizer=torch.load(DEV_TOKENIZER_VERSION3_FILENAME)
+            else:
+                tokenizer=torch.load(TRAIN_TOKENIZER_VERSION2_FILENAME)
+        else:
+            if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
+                tokenizer=torch.load(TRAIN_TOKENIZER_VERSION1_FILENAME)
+            elif data_set_range==DATA_SET_RANGE.DEV_DATA:
+                tokenizer=torch.load(TRAIN_TOKENIZER_VERSION2_FILENAME)
         
         
         return tokenizer

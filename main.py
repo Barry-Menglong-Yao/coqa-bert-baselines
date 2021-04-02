@@ -42,8 +42,7 @@ if args['model_name'] == 'SpanBERT':
     download_model()
     args['model_path'] = 'tmp_' 
 
-
-# TODO: cuda check
+ 
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
