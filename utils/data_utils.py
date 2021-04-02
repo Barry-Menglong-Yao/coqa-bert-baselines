@@ -16,12 +16,12 @@ import os.path
 import utils.timer  as  timer
 nlp = spacy.load('en_core_web_sm')
 
-TRAIN_COQA_DATASET_VERSION1_FILENAME="temp_data/train_coqa_dataset_version1.pt"
-TRAIN_COQA_DATASET_VERSION2_FILENAME="temp_data/train_coqa_dataset_version2.pt"
-DEV_COQA_DATASET_FILENAME="temp_data/dev_coqa_dataset.pt"
-TRAIN_TOKENIZER_VERSION1_FILENAME="temp_data/train_tokenizer_version1.pt"
-TRAIN_TOKENIZER_VERSION2_FILENAME="temp_data/train_tokenizer_version2_10000.pt"
-DEV_TOKENIZER_VERSION3_FILENAME="temp_data/dev_tokenizer_version3.pt"
+TRAIN_COQA_DATASET_VERSION1_FILENAME="temp_data/train/train_coqa_dataset_version1.pt"
+TRAIN_COQA_DATASET_VERSION2_FILENAME="temp_data/train/train_coqa_dataset_version2_10000.pt"
+DEV_COQA_DATASET_FILENAME="temp_data/dev/dev_coqa_dataset.pt"
+TRAIN_TOKENIZER_VERSION1_FILENAME="temp_data/train/train_tokenizer_version1.pt"
+TRAIN_TOKENIZER_VERSION2_FILENAME="temp_data/train/train_tokenizer_version2_10000.pt"
+DEV_TOKENIZER_VERSION3_FILENAME="temp_data/dev/dev_tokenizer_version3.pt"
 
 
 def prepare_datasets(config, tokenizer_model):
@@ -135,16 +135,16 @@ class CoQADataset(Dataset):
         #'''
 
         if "train" in filename:
-            with open('temp_data/example.pkl', 'rb') as input:
+            with open('temp_data/train/example.pkl', 'rb') as input:
                 self.examples = pickle.load(input)
 
-            with open('temp_data/paragraph.pkl', 'rb') as input:
+            with open('temp_data/train/paragraph.pkl', 'rb') as input:
                 self.paragraphs = pickle.load(input) 
         else:
-            with open('temp_data/dev.json_example.pkl', 'rb') as input:
+            with open('temp_data/dev/dev.json_example.pkl', 'rb') as input:
                 self.examples = pickle.load(input)
 
-            with open('temp_data/dev.json_paragraph.pkl', 'rb') as input:
+            with open('temp_data/dev/dev.json_paragraph.pkl', 'rb') as input:
                 self.paragraphs = pickle.load(input) 
 
         print('Load {} paragraphs, {} examples.'.format(len(self.paragraphs), len(self.examples)))  
