@@ -45,7 +45,7 @@ if args['model_name'] == 'SpanBERT':
 
 # TODO: cuda check
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+# os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 handler = ModelHandler(args)
 handler.train()

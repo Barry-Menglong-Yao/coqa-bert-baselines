@@ -20,7 +20,7 @@ TRAIN_COQA_DATASET_VERSION1_FILENAME="temp_data/train_coqa_dataset_version1.pt"
 TRAIN_COQA_DATASET_VERSION2_FILENAME="temp_data/train_coqa_dataset_version2.pt"
 DEV_COQA_DATASET_FILENAME="temp_data/dev_coqa_dataset.pt"
 TRAIN_TOKENIZER_VERSION1_FILENAME="temp_data/train_tokenizer_version1.pt"
-TRAIN_TOKENIZER_VERSION2_FILENAME="temp_data/train_tokenizer_version2.pt"
+TRAIN_TOKENIZER_VERSION2_FILENAME="temp_data/train_tokenizer_version2_10000.pt"
 DEV_TOKENIZER_VERSION3_FILENAME="temp_data/dev_tokenizer_version3.pt"
 
 
@@ -28,7 +28,7 @@ def prepare_datasets(config, tokenizer_model):
     print("Prepare dataset begin")
     tokenizer = tokenizer_model[1].from_pretrained(tokenizer_model[2])
     # if preprocess part 1
-    data_set_range=DATA_SET_RANGE.TRAIN_DATA_FIRST_PART
+    data_set_range=DATA_SET_RANGE.DEV_DATA 
     # elif preprocess part 2
     # data_set_range=DATA_SET_RANGE.TRAIN_DATA_SECOND_PART
 
@@ -252,7 +252,7 @@ class CoQADataset(Dataset):
     # generate input_tokens for BERT and save in self.chunked_examples  (can use minibatch)
     #  tokenizer.add_tokens()
     def chunk_paragraphs_and_save(self, tokenizer, model_name ,data_set_range):
-        # when preprocess the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
+        #  when preprocess the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
         tokenizer= self.load_tokenizer(data_set_range,tokenizer)
         print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
         # cnt = self.load_cnt(data_set_range)
@@ -260,8 +260,8 @@ class CoQADataset(Dataset):
         c_known = 0
         dis = 0
 
- 
-        number_of_part1=40000
+  
+        number_of_part1=125000
         if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
             start_idx=number_of_part1
         else:
@@ -273,6 +273,8 @@ class CoQADataset(Dataset):
             if i >=number_of_part1:
                 break
             if (i+1)%5000==0:
+                self.save_tokenizer(tokenizer,data_set_range)
+                self.save_coqa_dataset(data_set_range) #chunked_examples
                 print(timer1.remains(number_of_part1,i))
                 
             

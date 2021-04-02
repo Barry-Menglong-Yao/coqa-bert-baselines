@@ -13,6 +13,6 @@ utils/__pycache__/download.cpython-38.pyc
 utils/__pycache__/eval_utils.cpython-37.pyc
 utils/__pycache__/eval_utils.cpython-38.pyc
 utils/__pycache__/timer.cpython-38.pyc
-temp_data/*.pkl
+temp_data/**
 *.pt
 output/**
