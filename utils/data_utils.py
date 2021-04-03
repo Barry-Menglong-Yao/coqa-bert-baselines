@@ -77,6 +77,8 @@ def prepare_datasets(config, tokenizer_model):
         devloader1 = CustomDataLoader(devset1, config['batch_size']) 
         # tokenizer1=load_tokenizer(preprocess_step, data_set_range, tokenizer)
         tokenizer1=torch.load("temp_data/saved/dev_tokenizer_version3.pt")
+        print('Train Load {} paragraphs, {} examples.'.format(len(trainset1.paragraphs), len(trainset1.examples)))
+        print('Dev Load {} paragraphs, {} examples.'.format(len(devset1.paragraphs), len(devset1.examples)))
     return trainloader1, devloader1, tokenizer1
 
 def get_file_contents(filename, encoding='utf-8'):
