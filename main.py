@@ -44,7 +44,7 @@ if args['model_name'] == 'SpanBERT':
 
  
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 handler = ModelHandler(args)
 handler.train()
