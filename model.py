@@ -15,6 +15,7 @@ class Model(nn.Module):
 		if config['model_path'] is not None:
 			self.pretrained_model = model[0].from_pretrained(config['model_path']).to(device)
 		else:
+			print("{0},{1},{2}".format(model[0],model[2],device))
 			self.pretrained_model = model[0].from_pretrained(model[2]).to(device)
 		self.pretrained_model.resize_token_embeddings(len(tokenizer))
 		self.pretrained_model.train()

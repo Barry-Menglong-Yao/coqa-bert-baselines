@@ -23,9 +23,11 @@ class ModelHandler():
 		self._n_dev_batches = len(self.dev_loader.dataset) // config['batch_size']
 		self._n_train_batches = len(self.train_loader.dataset) // config['batch_size']
 		if config['cuda']:
-			self.device = torch.device('cuda')
+			self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+			
 		else:
 			self.device = torch.device('cpu')
+		print("use device: ",self.device)
 
 		self._train_loss = AverageMeter()
 		self._train_f1 = AverageMeter()

@@ -26,7 +26,7 @@ DEV_TOKENIZER_VERSION3_FILENAME= "temp_data/dev/dev_tokenizer_version3.pt"
 number_of_part1=1   #25000 for 4 hours. 125000 for all. 3 for test.
 
 def prepare_datasets(config, tokenizer_model):
-    print("Prepare dataset begin")
+    # print("Prepare dataset begin")
     tokenizer = tokenizer_model[1].from_pretrained(tokenizer_model[2])
     # if preprocess part 1
     data_set_range=DATA_SET_RANGE.TRAIN_DATA_FIRST_PART 
@@ -63,9 +63,9 @@ def prepare_datasets(config, tokenizer_model):
         trainset = CoQADataset(config['trainset'],preprocess_step)
         trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,DATA_SET_RANGE.TRAIN_DATA_FIRST_PART)
         trainloader = CustomDataLoader(trainset, config['batch_size'])
-        devset = CoQADataset(config['devset'],preprocess_step)
-        devset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,DATA_SET_RANGE.DEV_DATA )
-        devloader = CustomDataLoader(devset, config['batch_size']) 
+        # devset = CoQADataset(config['devset'],preprocess_step)
+        # devset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,DATA_SET_RANGE.DEV_DATA )
+        # devloader = CustomDataLoader(devset, config['batch_size']) 
 
          
         # trainset1 = torch.load(TRAIN_COQA_DATASET_VERSION1_FILENAME) 
