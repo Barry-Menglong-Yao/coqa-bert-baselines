@@ -46,5 +46,9 @@ if args['model_name'] == 'SpanBERT':
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
+
+import torch
+print("gpu available: ",torch.cuda.is_available())
+
 handler = ModelHandler(args)
 handler.train()
