@@ -66,11 +66,18 @@ def prepare_datasets(config, tokenizer_model):
         devset = CoQADataset(config['devset'],preprocess_step)
         devset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,DATA_SET_RANGE.DEV_DATA )
         devloader = CustomDataLoader(devset, config['batch_size']) 
+
+         
+        # trainset1 = torch.load(TRAIN_COQA_DATASET_VERSION1_FILENAME) 
  
-        trainset = torch.load(TRAIN_COQA_DATASET_VERSION1_FILENAME)
-        devset = torch.load(DEV_COQA_DATASET_FILENAME)
-        tokenizer=load_tokenizer(preprocess_step, data_set_range, tokenizer)
-    return trainloader, devloader, tokenizer
+        # devset1 = torch.load(DEV_COQA_DATASET_FILENAME) 
+        trainset1 = torch.load("temp_data/saved/train_coqa_dataset_version2_10000.pt") 
+        trainloader1 = CustomDataLoader(trainset1, config['batch_size'])
+        devset1 = torch.load("temp_data/saved/dev_coqa_dataset.pt") 
+        devloader1 = CustomDataLoader(devset1, config['batch_size']) 
+        # tokenizer1=load_tokenizer(preprocess_step, data_set_range, tokenizer)
+        tokenizer1=torch.load("temp_data/saved/dev_tokenizer_version3.pt")
+    return trainloader1, devloader1, tokenizer1
 
 def get_file_contents(filename, encoding='utf-8'):
     with io.open(filename, encoding=encoding) as f:
