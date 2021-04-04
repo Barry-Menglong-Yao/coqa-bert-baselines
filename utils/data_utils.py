@@ -20,38 +20,30 @@ TRAIN_COQA_DATASET_VERSION1_FILENAME="temp_data/train/train_coqa_dataset_version
 DEV_COQA_DATASET_FILENAME="temp_data/dev/dev_coqa_dataset.pt"
 TRAIN_TOKENIZER_VERSION1_FILENAME="temp_data/saved/data/40000/train_tokenizer_version1.pt"
 DEV_TOKENIZER_VERSION3_FILENAME= "temp_data/dev/dev_tokenizer_version3.pt"
- 
+DATA_PATH="temp_data/saved/data/" 
+
+
 number_of_part1=125000   #25000 for 4 hours. 125000 for all. 3 for test.
 
 def prepare_datasets(config, tokenizer_model):
-    # print("Prepare dataset begin")
     tokenizer = tokenizer_model[1].from_pretrained(tokenizer_model[2])
-    # if preprocess part 1
-    
-    # elif preprocess part 2
-    # data_set_range=DATA_SET_RANGE.TRAIN_DATA_SECOND_PART
-
     if config['data_set_range']=='DEV_DATA':
         data_set_range=DATA_SET_RANGE.DEV_DATA 
     else:
         data_set_range=DATA_SET_RANGE.TRAIN_DATA 
-
-    if config['mode']=='train':
-        preprocess_step=PREPROCESS_STEP.LOAD_ALL_DATA
+    if config['mode']=='train' or  config['mode']=='test':
+        preprocess_step=PROCESS_STEP.TRAIN__LOAD_ALL_DATA
     else:
-        preprocess_step=PREPROCESS_STEP.SPLIT_DATA_AND_SAVE
+        preprocess_step=PROCESS_STEP.PREPROCESS__SPLIT_DATA_AND_SAVE
     trainloader=None 
     devloader=None 
 
-    if preprocess_step==PREPROCESS_STEP.SPLIT_DATA_AND_SAVE:
+    if preprocess_step==PROCESS_STEP.PREPROCESS__SPLIT_DATA_AND_SAVE:
         if data_set_range==DATA_SET_RANGE.DEV_DATA: 
+            tokenizer=load_tokenizer(config['preprocessed_data_dir'], preprocess_step,data_set_range,tokenizer)
             devset = CoQADataset(config['devset'],preprocess_step)
             devset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,data_set_range)
             devloader = CustomDataLoader(devset, config['batch_size'])
-        elif data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
-            trainset = torch.load(TRAIN_COQA_DATASET_VERSION1_FILENAME)
-            trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,data_set_range)
-            trainloader = CustomDataLoader(trainset, config['batch_size'])
         else:
             trainset = CoQADataset(config['trainset'],preprocess_step)
             trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,data_set_range)
@@ -72,15 +64,20 @@ def prepare_datasets(config, tokenizer_model):
         # devset1 = torch.load(DEV_COQA_DATASET_FILENAME) 
 
 
-        trainset1 = torch.load("temp_data/saved/data/40000/train_coqa_dataset_version2_10000.pt") 
+        trainset1 = load_data(DATA_PATH+"10000/train_coqa_dataset_version2_10000.pt") 
         trainloader1 = CustomDataLoader(trainset1, config['batch_size'])
-        devset1 = torch.load("temp_data/saved/data/10000_turn_id/dev_coqa_dataset.pt") 
+        devset1 = load_data(DATA_PATH+config['preprocessed_data_dir']+"/dev_coqa_dataset.pt") 
         devloader1 = CustomDataLoader(devset1, config['batch_size']) 
-        tokenizer1=torch.load("temp_data/saved/data/10000_turn_id/dev_tokenizer_version3.pt")
+        tokenizer1=load_tokenizer(config['preprocessed_data_dir'], preprocess_step, data_set_range, tokenizer)
         print('Train Load {} paragraphs, {} examples.'.format(len(trainset1.paragraphs), len(trainset1.examples)))
         print('Dev Load {} paragraphs, {} examples.'.format(len(devset1.paragraphs), len(devset1.examples)))
     # return trainloader1, devloader1, tokenizer1
     return trainloader1, devloader1, tokenizer1
+ 
+
+def load_data(filename):
+    print("load from ",filename)
+    return torch.load(filename)
 
 def get_file_contents(filename, encoding='utf-8'):
     with io.open(filename, encoding=encoding) as f:
@@ -112,9 +109,9 @@ def preprocess(text):
 
 
 from enum import Enum
-class PREPROCESS_STEP(Enum):
-    SPLIT_DATA_AND_SAVE = 1  #is spliting data into multi parts and save them. will save from the last checkpoint
-    LOAD_ALL_DATA = 2   #is in training step. Just load all dataset and cnt=0
+class PROCESS_STEP(Enum):
+    PREPROCESS__SPLIT_DATA_AND_SAVE = 1  #is spliting data into multi parts and save them. will save from the last checkpoint
+    TRAIN__LOAD_ALL_DATA = 2   #is in training step. Just load all dataset and cnt=0
     DEBUG_WITH_SMALL_DATA =3
 
 class DATA_SET_RANGE(Enum):
@@ -173,7 +170,7 @@ class CoQADataset(Dataset):
         # print("Read started.   ", len(dataset['data']))
 
         #'''
-        if preprocess_step==PREPROCESS_STEP.DEBUG_WITH_SMALL_DATA :
+        if preprocess_step==PROCESS_STEP.DEBUG_WITH_SMALL_DATA :
             self.do_original_init_process(filename)
         else:
             self.load_from_file(filename)
@@ -261,26 +258,15 @@ class CoQADataset(Dataset):
 
     
      
-
-
-    def chunk_paragraphs(self, tokenizer, model_name,preprocess_step,data_set_range):
-        
-
-        if preprocess_step==PREPROCESS_STEP.LOAD_ALL_DATA:
-            tokenizer= load_tokenizer(preprocess_step,data_set_range,tokenizer)
-        else:
-            self.chunk_paragraphs_and_save(  tokenizer, model_name,preprocess_step,data_set_range)
-        
-
-         
+ 
 
     ##
     # generate input_tokens for BERT and save in self.chunked_examples  (can use minibatch)
     #  tokenizer.add_tokens()
-    def chunk_paragraphs_and_save(self, tokenizer, model_name ,preprocess_step,data_set_range):
+    def chunk_paragraphs(self, tokenizer, model_name ,preprocess_step,data_set_range):
         #  when preprocess the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
-        tokenizer=  load_tokenizer(preprocess_step,data_set_range,tokenizer)
-        print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
+        # tokenizer=  load_tokenizer(preprocess_step,data_set_range,tokenizer)
+        # print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
         # cnt = self.load_cnt(data_set_range)
         c_unknown = 0
         c_known = 0
@@ -443,19 +429,18 @@ class CoQADataset(Dataset):
         return self.chunked_examples[idx]
 
 
-def load_tokenizer( preprocess_step,data_set_range,tokenizer):
-    if preprocess_step==PREPROCESS_STEP.LOAD_ALL_DATA:
-        if data_set_range==DATA_SET_RANGE.DEV_DATA: 
-            tokenizer=torch.load(DEV_TOKENIZER_VERSION3_FILENAME)
-        else:
-            tokenizer=torch.load(TRAIN_TOKENIZER_VERSION1_FILENAME)
+def load_tokenizer(parent_dir, preprocess_step,data_set_range,tokenizer):
+    if preprocess_step==PROCESS_STEP.TRAIN__LOAD_ALL_DATA:   
+        filename=DATA_PATH+parent_dir+"/dev_tokenizer_version3.pt"
     else:
-        if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
-            tokenizer=torch.load(TRAIN_TOKENIZER_VERSION1_FILENAME)
-        elif data_set_range==DATA_SET_RANGE.DEV_DATA:
-            tokenizer=torch.load(TRAIN_TOKENIZER_VERSION1_FILENAME)
-    
-    
+        # if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
+        #     tokenizer=torch.load(TRAIN_TOKENIZER_VERSION1_FILENAME)
+        # el
+        if data_set_range==DATA_SET_RANGE.DEV_DATA:
+            filename=DATA_PATH+parent_dir+"/train_tokenizer_version1.pt"
+            
+    tokenizer=torch.load(filename)
+    print("load from ",filename)
     return tokenizer
 
 class CustomDataLoader:
@@ -464,8 +449,8 @@ class CustomDataLoader:
         self.batch_size = batch_size
         self.state = 0
         self.batch_state = 0
-        self.examples = [i for i in range(len(self.dataset))]
         self.current_view = []
+        self.examples = [i for i in range(len(self.dataset))]
     
     def __len__(self):
         return math.ceil(len(self.examples)/self.batch_size)

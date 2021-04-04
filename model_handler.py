@@ -7,7 +7,8 @@ from transformers import *
 import time
 from utils.timer import Timer
 import os
- 
+import json
+import utils.evaluate  as test_evaluator
 
 MODELS = {'BERT':(BertModel,       BertTokenizer,       'bert-base-uncased'),
           'DistilBERT':(DistilBertModel, DistilBertTokenizer, 'distilbert-base-uncased'),
@@ -148,22 +149,23 @@ class ModelHandler():
 			'dataloader_examples':self.train_loader.examples}
 		torch.save(save_dic, self.config['save_state_dir']+'/latest/model.pth')
 
-
-	def _run_epoch(self, data_loader, training=True, verbose=10, out_predictions=False, save = True):
+	def _run_epoch(self, data_loader, training=True, verbose=10, out_predictions=False, save=True):
 	    start_time = time.time()
 	    while data_loader.batch_state < len(data_loader):
-	        input_batch  = data_loader.get()
+	        input_batch = data_loader.get()
 	        res = self.model(input_batch, training)
 	        tr_loss = 0
 	        if training:
 	        	loss = res['loss']
-	        	if self.config['gradient_accumulation_steps'] > 1:
+	         	if self.config['gradient_accumulation_steps'] > 1:
 	        		loss = loss / self.config['gradient_accumulation_steps']
 	        	tr_loss = loss.mean().item()
-	        start_logits = res['start_logits']
-	        end_logits = res['end_logits']
-	        
-	        if training:
+            start_logits = res['start_logits']
+		    end_logits = res['end_logits']
+			paragraph_id_list = [inp['paragraph_id'] for inp in input_batch]
+			turn_id_list = [inp['turn_id'] for inp in input_batch]
+			print("paragraph_id:{},turn_id:{}".format(paragraph_id_list[0],turn_id_list[0]))
+			if training:
 	        	self.model.update(loss, self.optimizer, data_loader.batch_state)
 	        paragraphs = [inp['tokens'] for inp in input_batch]
 	        answers = [inp['answer'] for inp in input_batch]
@@ -217,13 +219,24 @@ class ModelHandler():
 
 	def test(self):
 		data_loader=self.dev_loader
+		data_loader.batch_size=1
+		prediciton_dic_list=[]
+		cnt=0
+		answer_filename='data/answers.json'
 		while data_loader.batch_state < len(data_loader):
+			# if cnt>3:
+			# 	break 
+			cnt+=1
 			input_batch  = data_loader.get()
-			predicitons=self.gen_prediction(input_batch)
-			 
-			# turn_id=gen_turn_id(data_loader)
-			# paragraph_id=gen_paragraph_id()
-    	# save_to_json(prediction,turn_id,paragraph_id)
+			prediction=self.gen_prediction(input_batch)
+			turn_id=gen_turn_id(input_batch)
+			paragraph_id=gen_paragraph_id(input_batch)
+			prediction_dict={"id":paragraph_id[0],"turn_id":turn_id[0],"answer":prediction[0]}
+			prediciton_dic_list.append(prediction_dict)
+		with open(answer_filename, 'w') as outfile:
+			json.dump(prediciton_dic_list, outfile)
+		test_evaluator.test('data/coqa-dev-v1.0.json',answer_filename)
+    	 
 
  
 
@@ -234,13 +247,18 @@ class ModelHandler():
 		end_logits = res['end_logits']
 		paragraphs = [inp['tokens'] for inp in input_batch]
 		predictions = self.model.gen_prediction(start_logits, end_logits, paragraphs)
-		return predicitons
+		return predictions
 
 
-def gen_turn_id(data_loader):
-	return turn_id
-def gen_paragraph_id():
-	return paragraph_id
+def gen_turn_id(input_batch):
+	turn_id_list = [inp['turn_id'] for inp in input_batch]
+	return turn_id_list
+def gen_paragraph_id(input_batch):
+	paragraph_id_list = [inp['paragraph_id'] for inp in input_batch]
+ 
+	return paragraph_id_list
+
+
 
  
  

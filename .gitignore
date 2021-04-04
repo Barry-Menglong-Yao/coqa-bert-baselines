@@ -1,5 +1,8 @@
 data/**
- 
+model/**
+temp_data/**
+*.pt
+output/**
 .vscode/settings.json
 __pycache__/model_handler.cpython-37.pyc
 __pycache__/model_handler.cpython-38.pyc
@@ -13,6 +16,6 @@ utils/__pycache__/download.cpython-38.pyc
 utils/__pycache__/eval_utils.cpython-37.pyc
 utils/__pycache__/eval_utils.cpython-38.pyc
 utils/__pycache__/timer.cpython-38.pyc
-temp_data/**
-*.pt
-output/**
+
+.vscode/.ropeproject/objectdb
+utils/__pycache__/evaluate.cpython-38.pyc

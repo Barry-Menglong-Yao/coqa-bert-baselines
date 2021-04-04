@@ -223,15 +223,15 @@ class CoQAEvaluator():
 
 def parse_args():
     parser = argparse.ArgumentParser('Official evaluation script for CoQA.')
-    parser.add_argument('--data-file', dest="data_file", help='Input data JSON file.')
-    parser.add_argument('--pred-file', dest="pred_file", help='Model predictions.')
+    parser.add_argument('--data-file', dest="data_file", help='Input data JSON file.',default="data/coqa-dev-v1.0.json")
+    parser.add_argument('--pred-file', dest="pred_file", help='Model predictions.',default="data/answers.json")
     parser.add_argument('--out-file', '-o', metavar='eval.json',
                         help='Write accuracy metrics to file (default is stdout).')
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--human', dest="human", action='store_true')
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(1)
+    # if len(sys.argv) == 1:
+    #     parser.print_help()
+    #     sys.exit(1)
     return parser.parse_args()
 
 def main():
@@ -244,6 +244,15 @@ def main():
         with open(OPTS.pred_file) as f:
             pred_data = CoQAEvaluator.preds_to_dict(OPTS.pred_file)
         print(json.dumps(evaluator.model_performance(pred_data), indent=2))
+
+def test(data_file,pred_file):
+    evaluator = CoQAEvaluator( data_file)
+ 
+
+    with open( pred_file) as f:
+        pred_data = CoQAEvaluator.preds_to_dict( pred_file)
+    print(json.dumps(evaluator.model_performance(pred_data), indent=2))
+       
 
 if __name__ == '__main__':
     OPTS = parse_args()
