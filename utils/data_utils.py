@@ -69,7 +69,7 @@ def prepare_datasets(config, tokenizer_model):
         devset1 = load_data(DATA_PATH+config['preprocessed_data_dir']+"/dev_coqa_dataset.pt") 
         devloader1 = CustomDataLoader(devset1, config['batch_size']) 
         tokenizer1=load_tokenizer(config['preprocessed_data_dir'], preprocess_step, data_set_range, tokenizer)
-        print('Train Load   {} chunk_examples.'.format(len(trainset1.chunk_examples) ))
+        print('Train Load   {} chunk_examples.'.format(len(trainset1.chunked_examples) ))
         print('Dev Load {} paragraphs, {} examples.'.format(len(devset1.paragraphs), len(devset1.examples)))
     # return trainloader1, devloader1, tokenizer1
     return trainloader1, devloader1, tokenizer1

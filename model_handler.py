@@ -50,12 +50,11 @@ class ModelHandler():
 		self._best_f1 = 0
 		self._best_em = 0
 		self.restored = False
-		# if config['pretrained_dir'] is not None:   
-			# self.load_model()
-			# if config['mode']=='train': TODO 
-			# 	self.restore()
-			# else:
-				
+		if config['pretrained_dir'] is not None:   
+			if config['mode']=='train':   
+				self.restore()
+			else:
+				self.load_model()
 
 	def train(self):
 		timer = Timer(' timer' )
@@ -223,21 +222,31 @@ class ModelHandler():
 		data_loader=self.dev_loader
 		data_loader.batch_size=1
 		prediciton_dic_list=[]
-		cnt=0
+		cnt=1
+		last_paragraph_id=-1
+		last_turn_id=-1
 		answer_filename='data/answers.json'
+		timer1=Timer()
 		while data_loader.batch_state < len(data_loader):
 			# if cnt>3:
-			# 	break 
-			cnt+=1
+			# 	break 	
+			if cnt%1000==0:
+				print(timer1.remains(len(data_loader),cnt))
 			input_batch  = data_loader.get()
 			prediction=self.gen_prediction(input_batch)
 			turn_id=gen_turn_id(input_batch)
 			paragraph_id=gen_paragraph_id(input_batch)
 			prediction_dict={"id":paragraph_id[0],"turn_id":turn_id[0],"answer":prediction[0]}
-			prediciton_dic_list.append(prediction_dict)
+
+			is_exist,last_paragraph_id,last_turn_id=check_exist_status(paragraph_id,turn_id,last_paragraph_id,last_turn_id)
+			if not is_exist:
+				prediciton_dic_list.append(prediction_dict)
+				cnt+=1
+		
 		with open(answer_filename, 'w') as outfile:
 			json.dump(prediciton_dic_list, outfile)
 		test_evaluator.test('data/coqa-dev-v1.0.json',answer_filename)
+		print("generate {} answers".format(cnt))
     	 
 
  
@@ -251,6 +260,12 @@ class ModelHandler():
 		predictions = self.model.gen_prediction(start_logits, end_logits, paragraphs)
 		return predictions
 
+
+def check_exist_status(paragraph_id,turn_id,last_paragraph_id,last_turn_id):
+	if paragraph_id==last_paragraph_id and turn_id==last_turn_id:
+		return True,paragraph_id,turn_id
+	else:
+		return False,paragraph_id,turn_id
 
 def gen_turn_id(input_batch):
 	turn_id_list = [inp['turn_id'] for inp in input_batch]

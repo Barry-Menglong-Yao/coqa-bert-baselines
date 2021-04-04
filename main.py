@@ -36,8 +36,8 @@ parser.add_argument('--gpu_list', type = str, default = '1'
 
 parser.add_argument('--save_state_dir', type = str, default = 'output') #output for data and model
 parser.add_argument('--pretrained_dir', type = str, default = 'model/10000')#input for model 
-parser.add_argument('--preprocessed_data_dir', type = str, default = '40000')  #input for data 
-parser.add_argument('--mode', type = str, default = 'train', help = ' preprocess or train or test')
+parser.add_argument('--preprocessed_data_dir', type = str, default = '10000_turn_id')  #input for data 
+parser.add_argument('--mode', type = str, default = 'test', help = ' preprocess or train or test')
 parser.add_argument('--data_set_range', type = str, default = 'TRAIN_DATA'
 , help = ' TRAIN_DATA or DEV_DATA ')
 
