@@ -15,7 +15,6 @@ class Model(nn.Module):
 		if config['model_path'] is not None:
 			self.pretrained_model = model[0].from_pretrained(config['model_path']).to(device)
 		else:
-			print("{0},{1},{2}".format(model[0],model[2],device))
 			self.pretrained_model = model[0].from_pretrained(model[2]).to(device)
 		self.pretrained_model.resize_token_embeddings(len(tokenizer))
 		self.pretrained_model.train()
@@ -64,23 +63,27 @@ class Model(nn.Module):
 			optimizer.zero_grad()
 
 	def evaluate(self, score_s, score_e, paragraphs, answers, debug = False):
-	    if score_s.size(0) > 1:
-	        score_s = score_s.exp().squeeze()
-	        score_e = score_e.exp().squeeze()
-	    else:
-	        score_s = score_s.exp()
-	        score_e = score_e.exp()
-	    predictions = []
-	    spans = []
-	    for i, (_s, _e) in enumerate(zip(score_s, score_e)):
-	        _s = _s.view(1, -1)
-	        _e = _e.view(1, -1)
-	        prediction, span = self._scores_to_text(paragraphs[i], _s, _e)
-	        predictions.append(prediction)
-	        spans.append(span)
+	    predictions=self.gen_prediction( score_s, score_e, paragraphs, debug)
 	    answers = [[' '.join(a)] for a in answers]
 	    f1, em = self.evaluate_predictions(predictions, answers)
 	    return f1, em
+
+	def gen_prediction(self, score_s, score_e, paragraphs, debug = False):
+		if score_s.size(0) > 1:
+			score_s = score_s.exp().squeeze()
+			score_e = score_e.exp().squeeze()
+		else:
+			score_s = score_s.exp()
+			score_e = score_e.exp()
+		predictions = []
+		spans = []
+		for i, (_s, _e) in enumerate(zip(score_s, score_e)):
+			_s = _s.view(1, -1)
+			_e = _e.view(1, -1)
+			prediction, span = self._scores_to_text(paragraphs[i], _s, _e)
+			predictions.append(prediction)
+			spans.append(span)
+		return predictions
 
 	def _scores_to_text(self, text, score_s, score_e):
 	    max_len = score_s.size(1)

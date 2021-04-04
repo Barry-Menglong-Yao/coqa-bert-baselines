@@ -7,6 +7,7 @@ from transformers import *
 import time
 from utils.timer import Timer
 import os
+ 
 
 MODELS = {'BERT':(BertModel,       BertTokenizer,       'bert-base-uncased'),
           'DistilBERT':(DistilBertModel, DistilBertTokenizer, 'distilbert-base-uncased'),
@@ -48,8 +49,11 @@ class ModelHandler():
 		self._best_f1 = 0
 		self._best_em = 0
 		self.restored = False
-		if config['pretrained_dir'] is not None:
-			self.restore()
+		# if config['pretrained_dir'] is not None: TODO 
+		# 	if config['mode']=='train':
+		# 		self.restore()
+		# 	else:
+		# 		self.load_model()
 
 	def train(self):
 		timer = Timer(' timer' )
@@ -74,7 +78,7 @@ class ModelHandler():
 			print(format_str.format(self._epoch, self._train_loss.mean(),
 			self._train_f1.mean(), self._train_em.mean()))
 			print("\n>>> Dev Epoch: [{} / {}]".format(self._epoch, self.config['max_epochs']))
-			self.dev_loader.prepare()
+			# self.dev_loader.prepare()TODO
 			self._run_epoch(self.dev_loader, training=False, verbose=self.config['verbose'], save = False)
 			format_str = "Validation Epoch {} -- F1: {:0.2f}, EM: {:0.2f} --"
 			print(format_str.format(self._epoch, self._dev_f1.mean(), self._dev_em.mean()))
@@ -88,6 +92,12 @@ class ModelHandler():
 			    print("!!! Updated: F1: {:0.2f}, EM: {:0.2f}".format(self._best_f1, self._best_em))
 			self._reset_metrics()
 			self.save(self._epoch)
+
+	def load_model(self):
+		restored_params = torch.load(self.config['pretrained_dir']+'/latest/model.pth')
+		self.model.load_state_dict(restored_params['model'])
+		  
+
 
 	def restore(self):
 		if not os.path.exists(self.config['pretrained_dir']):
@@ -123,6 +133,7 @@ class ModelHandler():
 			'best_f1':self._best_f1,
 			'best_em':self._best_em}
 			torch.save(save_dic, self.config['save_state_dir']+'/best/model.pth')
+			
 		if not os.path.exists(self.config['save_state_dir']+'/latest'):
 			os.mkdir(self.config['save_state_dir']+'/latest')
 		save_dic = {'epoch':save_epoch_val,
@@ -141,7 +152,7 @@ class ModelHandler():
 	def _run_epoch(self, data_loader, training=True, verbose=10, out_predictions=False, save = True):
 	    start_time = time.time()
 	    while data_loader.batch_state < len(data_loader):
-	        input_batch = data_loader.get()
+	        input_batch  = data_loader.get()
 	        res = self.model(input_batch, training)
 	        tr_loss = 0
 	        if training:
@@ -203,3 +214,34 @@ class ModelHandler():
 		no_improvement = epoch >= self._best_epoch + 10
 		exceeded_max_epochs = epoch >= self.config['max_epochs']
 		return False if exceeded_max_epochs or no_improvement else True
+
+	def test(self):
+		data_loader=self.dev_loader
+		while data_loader.batch_state < len(data_loader):
+			input_batch  = data_loader.get()
+			predicitons=self.gen_prediction(input_batch)
+			 
+			# turn_id=gen_turn_id(data_loader)
+			# paragraph_id=gen_paragraph_id()
+    	# save_to_json(prediction,turn_id,paragraph_id)
+
+ 
+
+
+	def gen_prediction(self,input_batch):
+		res = self.model(input_batch, False)
+		start_logits = res['start_logits']
+		end_logits = res['end_logits']
+		paragraphs = [inp['tokens'] for inp in input_batch]
+		predictions = self.model.gen_prediction(start_logits, end_logits, paragraphs)
+		return predicitons
+
+
+def gen_turn_id(data_loader):
+	return turn_id
+def gen_paragraph_id():
+	return paragraph_id
+
+ 
+ 
+		 

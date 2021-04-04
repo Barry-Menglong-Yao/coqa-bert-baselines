@@ -1,5 +1,5 @@
-data/coqa.train.json
-data/coqa.dev.json
+data/**
+ 
 .vscode/settings.json
 __pycache__/model_handler.cpython-37.pyc
 __pycache__/model_handler.cpython-38.pyc
