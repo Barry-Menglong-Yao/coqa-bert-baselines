@@ -64,12 +64,12 @@ def prepare_datasets(config, tokenizer_model):
         # devset1 = torch.load(DEV_COQA_DATASET_FILENAME) 
 
 
-        trainset1 = load_data(DATA_PATH+"10000/train_coqa_dataset_version2_10000.pt") 
+        trainset1 = load_data(DATA_PATH+config['preprocessed_data_dir']+"/train_coqa_dataset_version1.pt") 
         trainloader1 = CustomDataLoader(trainset1, config['batch_size'])
         devset1 = load_data(DATA_PATH+config['preprocessed_data_dir']+"/dev_coqa_dataset.pt") 
         devloader1 = CustomDataLoader(devset1, config['batch_size']) 
         tokenizer1=load_tokenizer(config['preprocessed_data_dir'], preprocess_step, data_set_range, tokenizer)
-        print('Train Load {} paragraphs, {} examples.'.format(len(trainset1.paragraphs), len(trainset1.examples)))
+        print('Train Load   {} chunk_examples.'.format(len(trainset1.chunk_examples) ))
         print('Dev Load {} paragraphs, {} examples.'.format(len(devset1.paragraphs), len(devset1.examples)))
     # return trainloader1, devloader1, tokenizer1
     return trainloader1, devloader1, tokenizer1

@@ -64,7 +64,6 @@ class Model(nn.Module):
 
 	def evaluate(self, score_s, score_e, paragraphs, answers, debug = False):
 	    predictions=self.gen_prediction( score_s, score_e, paragraphs, debug)
-		print("predictions:{} ".format(predictions[0] ))
 	    answers = [[' '.join(a)] for a in answers]
 	    f1, em = self.evaluate_predictions(predictions, answers)
 	    return f1, em

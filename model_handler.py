@@ -50,11 +50,12 @@ class ModelHandler():
 		self._best_f1 = 0
 		self._best_em = 0
 		self.restored = False
-		# if config['pretrained_dir'] is not None: TODO 
-		# 	if config['mode']=='train':
-		# 		self.restore()
-		# 	else:
-		# 		self.load_model()
+		# if config['pretrained_dir'] is not None:   
+			# self.load_model()
+			# if config['mode']=='train': TODO 
+			# 	self.restore()
+			# else:
+				
 
 	def train(self):
 		timer = Timer(' timer' )
@@ -79,7 +80,7 @@ class ModelHandler():
 			print(format_str.format(self._epoch, self._train_loss.mean(),
 			self._train_f1.mean(), self._train_em.mean()))
 			print("\n>>> Dev Epoch: [{} / {}]".format(self._epoch, self.config['max_epochs']))
-			# self.dev_loader.prepare()TODO
+			self.dev_loader.prepare() 
 			self._run_epoch(self.dev_loader, training=False, verbose=self.config['verbose'], save = False)
 			format_str = "Validation Epoch {} -- F1: {:0.2f}, EM: {:0.2f} --"
 			print(format_str.format(self._epoch, self._dev_f1.mean(), self._dev_em.mean()))
@@ -149,7 +150,7 @@ class ModelHandler():
 			'dataloader_examples':self.train_loader.examples}
 		torch.save(save_dic, self.config['save_state_dir']+'/latest/model.pth')
 
-	def _run_epoch(self, data_loader, training=True, verbose=10, out_predictions=False, save=True):
+	def _run_epoch(self, data_loader, training=True, verbose=10, out_predictions=False, save = True):
 	    start_time = time.time()
 	    while data_loader.batch_state < len(data_loader):
 	        input_batch = data_loader.get()
@@ -157,18 +158,19 @@ class ModelHandler():
 	        tr_loss = 0
 	        if training:
 	        	loss = res['loss']
-	         	if self.config['gradient_accumulation_steps'] > 1:
+	        	if self.config['gradient_accumulation_steps'] > 1:
 	        		loss = loss / self.config['gradient_accumulation_steps']
 	        	tr_loss = loss.mean().item()
-            start_logits = res['start_logits']
-		    end_logits = res['end_logits']
-			paragraph_id_list = [inp['paragraph_id'] for inp in input_batch]
-			turn_id_list = [inp['turn_id'] for inp in input_batch]
-			print("paragraph_id:{},turn_id:{}".format(paragraph_id_list[0],turn_id_list[0]))
-			if training:
+	        start_logits = res['start_logits']
+	        end_logits = res['end_logits']
+	        
+	        if training:
 	        	self.model.update(loss, self.optimizer, data_loader.batch_state)
 	        paragraphs = [inp['tokens'] for inp in input_batch]
 	        answers = [inp['answer'] for inp in input_batch]
+	        # paragraph_id_list = [inp['paragraph_id'] for inp in input_batch]
+	        # turn_id_list = [inp['turn_id'] for inp in input_batch]
+	        # print("paragraph_id:{0},turn_id:{1}".format(paragraph_id_list[0],turn_id_list[0]))
 	        f1, em = self.model.evaluate(start_logits, end_logits, paragraphs, answers)
 
 	        self._update_metrics(tr_loss, f1, em, len(paragraphs), training=training)
