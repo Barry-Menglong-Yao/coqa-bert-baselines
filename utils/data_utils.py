@@ -33,8 +33,11 @@ def prepare_datasets(config, tokenizer_model):
         data_set_range=DATA_SET_RANGE.TRAIN_DATA 
     if config['mode']=='train' or  config['mode']=='test':
         preprocess_step=PROCESS_STEP.TRAIN__LOAD_ALL_DATA
-    else:
+    elif config['mode']=='preprocess':
         preprocess_step=PROCESS_STEP.PREPROCESS__SPLIT_DATA_AND_SAVE
+    else:
+        preprocess_step=PROCESS_STEP.DEBUG_WITH_SMALL_DATA
+
     trainloader=None 
     devloader=None 
 
@@ -50,29 +53,14 @@ def prepare_datasets(config, tokenizer_model):
             trainloader = CustomDataLoader(trainset, config['batch_size'])
             
     else :
- 
-        # trainset = CoQADataset(config['trainset'],preprocess_step)
-        # trainset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,DATA_SET_RANGE.TRAIN_DATA)
-        # trainloader = CustomDataLoader(trainset, config['batch_size'])
-        # devset = CoQADataset(config['devset'],preprocess_step)
-        # devset.chunk_paragraphs(tokenizer, config['model_name'],preprocess_step,DATA_SET_RANGE.DEV_DATA )
-        # devloader = CustomDataLoader(devset, config['batch_size']) 
-
-         
-        # trainset1 = torch.load(TRAIN_COQA_DATASET_VERSION1_FILENAME) 
-        # tokenizer1=load_tokenizer(preprocess_step, data_set_range, tokenizer)
-        # devset1 = torch.load(DEV_COQA_DATASET_FILENAME) 
-
-
-        trainset1 = load_data(DATA_PATH+config['preprocessed_data_dir']+"/train_coqa_dataset_version1.pt") 
-        trainloader1 = CustomDataLoader(trainset1, config['batch_size'])
-        devset1 = load_data(DATA_PATH+config['preprocessed_data_dir']+"/dev_coqa_dataset.pt") 
-        devloader1 = CustomDataLoader(devset1, config['batch_size']) 
-        tokenizer1=load_tokenizer(config['preprocessed_data_dir'], preprocess_step, data_set_range, tokenizer)
-        print('Train Load   {} chunk_examples.'.format(len(trainset1.chunked_examples) ))
-        print('Dev Load {} paragraphs, {} examples.'.format(len(devset1.paragraphs), len(devset1.examples)))
-    # return trainloader1, devloader1, tokenizer1
-    return trainloader1, devloader1, tokenizer1
+        trainset = load_data(DATA_PATH+config['preprocessed_data_dir']+"/train_coqa_dataset_version1.pt") 
+        trainloader = CustomDataLoader(trainset, config['batch_size'])
+        devset = load_data(DATA_PATH+config['preprocessed_data_dir']+"/dev_coqa_dataset.pt") 
+        devloader = CustomDataLoader(devset, config['batch_size']) 
+        tokenizer=load_tokenizer(config['preprocessed_data_dir'], preprocess_step, data_set_range, tokenizer)
+        print('Train Load   {} chunk_examples.'.format(len(trainset.chunked_examples) ))
+        print('Dev Load {} paragraphs, {} examples.'.format(len(devset.paragraphs), len(devset.examples)))
+    return trainloader, devloader, tokenizer
  
 
 def load_data(filename):
@@ -117,19 +105,9 @@ class PROCESS_STEP(Enum):
 class DATA_SET_RANGE(Enum):
     DEV_DATA=1
     TRAIN_DATA=2
-    TRAIN_DATA_SECOND_PART=3
 
 
-def loadall( filename):
-    with open(filename, "rb") as f:
-        while True:
-            try:
-                yield pickle.load(f)
-            except EOFError:
-                break
-
-def save_object(obj, filename):
-        pickle.dump(obj, filename) 
+ 
 class CoQADataset(Dataset):
     """CoQA dataset."""
 
@@ -226,61 +204,16 @@ class CoQADataset(Dataset):
         print('Paragraph length: avg = %.1f, max = %d' % (np.average(paragraph_lens), np.max(paragraph_lens)))
         print('Question length: avg = %.1f, max = %d' % (np.average(question_lens), np.max(question_lens)))
 
-        
-    
-
-
-    def load_cnt(self):
-        if data_set_range !=DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
-            num=0
-        else:
-            file_path = 'temp_data/count.txt'
-            num = 0
-            if os.path.isfile(file_path)    :
-                with open(file_path, newline='') as f:
-                    rows = list(csv.reader(f))
-                for row in rows:
-                    #print(type(row), row)
-                    num = int(row[0])
-                print("Mx count =======     ", num)
-
-        cnt = num
-        return cnt
-
-    def save_cnt(self,cnt):
-        file_path = 'temp_data/count.txt'
-        f = open(file_path, "w")
-            #if(cnt>=num):
-        f.write(str(cnt))
-        f.close()
-
-    
-
-    
-     
- 
-
     ##
     # generate input_tokens for BERT and save in self.chunked_examples  (can use minibatch)
     #  tokenizer.add_tokens()
     def chunk_paragraphs(self, tokenizer, model_name ,preprocess_step,data_set_range):
-        #  when preprocess the second 50000 examples, we need firstly load the first 50000 token into tokenizer. Otherwise, the token_id of a word may change. For example, from 50010 to 10.
-        # tokenizer=  load_tokenizer(preprocess_step,data_set_range,tokenizer)
-        # print("Chunk paragrapsh begin.      tokenizer number: {} ".format(len(tokenizer))  ) 
-        # cnt = self.load_cnt(data_set_range)
         c_unknown = 0
         c_known = 0
         dis = 0
-
-
-        
-        if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
-            start_idx=number_of_part1
-        else:
-            start_idx=0
          
         timer1=timer.Timer()
-        for i, ex in tqdm(enumerate(self.examples[start_idx::])):
+        for i, ex in tqdm(enumerate(self.examples[::])):
             total=min([len(self.examples[start_idx::]),number_of_part1])
 
             # if i >total:
@@ -289,9 +222,7 @@ class CoQADataset(Dataset):
                 self.save_tokenizer(tokenizer,data_set_range)
                 self.save_coqa_dataset(data_set_range) #chunked_examples
                 print(timer1.remains(total,i))
-                
-            
-              
+
             question_length = len(ex['annotated_question']['word'])
             if question_length > 350:  
                 continue
@@ -400,8 +331,7 @@ class CoQADataset(Dataset):
         if data_set_range==DATA_SET_RANGE.TRAIN_DATA:
             filename=TRAIN_TOKENIZER_VERSION1_FILENAME
             
-        elif data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
-            filename=TRAIN_TOKENIZER_VERSION1_FILENAME
+         
   
         else:
             filename=DEV_TOKENIZER_VERSION3_FILENAME
@@ -412,8 +342,7 @@ class CoQADataset(Dataset):
     def save_coqa_dataset(self, data_set_range):
         if data_set_range==DATA_SET_RANGE.TRAIN_DATA:
             filename=TRAIN_COQA_DATASET_VERSION1_FILENAME
-        elif data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
-            filename=TRAIN_COQA_DATASET_VERSION1_FILENAME
+         
            
         else:
             filename=DEV_COQA_DATASET_FILENAME
@@ -433,9 +362,6 @@ def load_tokenizer(parent_dir, preprocess_step,data_set_range,tokenizer):
     if preprocess_step==PROCESS_STEP.TRAIN__LOAD_ALL_DATA:   
         filename=DATA_PATH+parent_dir+"/dev_tokenizer_version3.pt"
     else:
-        # if data_set_range==DATA_SET_RANGE.TRAIN_DATA_SECOND_PART:
-        #     tokenizer=torch.load(TRAIN_TOKENIZER_VERSION1_FILENAME)
-        # el
         if data_set_range==DATA_SET_RANGE.DEV_DATA:
             filename=DATA_PATH+parent_dir+"/train_tokenizer_version1.pt"
             

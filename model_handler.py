@@ -95,7 +95,7 @@ class ModelHandler():
 			self.save(self._epoch)
 
 	def load_model(self):
-		restored_params = torch.load(self.config['pretrained_dir']+'/latest/model.pth')
+		restored_params = torch.load(self.config['pretrained_dir']+'/best/model.pth')
 		self.model.load_state_dict(restored_params['model'])
 		  
 
@@ -230,7 +230,7 @@ class ModelHandler():
 		while data_loader.batch_state < len(data_loader):
 			# if cnt>3:
 			# 	break 	
-			if cnt%1000==0:
+			if cnt%2000==0:
 				print(timer1.remains(len(data_loader),cnt))
 			input_batch  = data_loader.get()
 			prediction=self.gen_prediction(input_batch)
@@ -246,7 +246,7 @@ class ModelHandler():
 		with open(answer_filename, 'w') as outfile:
 			json.dump(prediciton_dic_list, outfile)
 		test_evaluator.test('data/coqa-dev-v1.0.json',answer_filename)
-		print("generate {} answers".format(cnt))
+		print("generate {} answers".format(cnt-1))
     	 
 
  

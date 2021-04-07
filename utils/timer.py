@@ -11,7 +11,7 @@ class Timer(object):
         self.start = round(time.time(), 2)
         self.intervalTime = round(time.time(), 2)
         self.start_time = datetime.datetime.now()
-        print("<> <> <> Starting Timer [{}] <> <> <>".format(self.name))
+        print("<> <> <> Starting Timer [{}] at {} <> <> <>".format(self.name,self.start_time))
 
     def reset(self):
         self.running = True

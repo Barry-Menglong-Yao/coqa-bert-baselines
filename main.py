@@ -31,14 +31,14 @@ parser.add_argument('--gradient_accumulation_steps', type=int, default=2,
                         help="Number of updates steps to accumulate before performing a backward/update pass.")
 parser.add_argument("--adam_epsilon", default=1e-8, type=float,
                     help="Epsilon for Adam optimizer.")
-parser.add_argument('--gpu_list', type = str, default = '1'
+parser.add_argument('--gpu_list', type = str, default = '2'
 , help = 'gpu_list,1,2')
 
 parser.add_argument('--save_state_dir', type = str, default = 'output') #output for data and model
-parser.add_argument('--pretrained_dir', type = str, default = 'model/10000')#input for model 
-parser.add_argument('--preprocessed_data_dir', type = str, default = '10000_turn_id')  #input for data 
-parser.add_argument('--mode', type = str, default = 'test', help = ' preprocess or train or test')
-parser.add_argument('--data_set_range', type = str, default = 'TRAIN_DATA'
+parser.add_argument('--pretrained_dir', type = str, default = 'output')#input for model 
+parser.add_argument('--preprocessed_data_dir', type = str, default = '108647')  #input for data 
+parser.add_argument('--mode', type = str, default = 'preprocess', help = ' preprocess or train or test or debug')
+parser.add_argument('--data_set_range', type = str, default = 'DEV_DATA'
 , help = ' TRAIN_DATA or DEV_DATA ')
 
 
@@ -52,13 +52,11 @@ if args['model_name'] == 'SpanBERT':
 
 os.environ["CUDA_VISIBLE_DEVICES"] = args['gpu_list']
 
-
-import torch
-print("gpu available: ",torch.cuda.is_available())
+ 
 print("args: ",args)
 
 handler = ModelHandler(args)
-if args['mode']=='train':
+if args['mode']=='train' or args['mode']=='debug':
     handler.train()
 elif args['mode']=='test':
     handler.test()
